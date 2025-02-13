@@ -1,0 +1,296 @@
+---
+title: "Planting Summary"
+author: "Darla Knuth"
+date: "2025-01-28"
+output:
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(RColorBrewer)
+library(kableExtra)
+library(DT)
+```
+# Summary of Planter Monitor Data {.tabset}
+
+## Planting 2.2
+
+```{r include=FALSE}
+planting_file <- read.csv("planting_2.2.csv")
+
+planting_file <- planting_file %>% 
+  separate(Date...Time, c("Date","Time","PM"), sep = " ")
+
+
+```
+
+```{r include=FALSE}
+
+time <- planting_file %>% 
+  group_by(Date) %>% 
+  summarise(
+    min=min(Time),
+    max=max(Time))
+  
+  
+```
+
+### Planting Start and End Times
+
+```{r echo=FALSE}
+kable(time,
+      col.names = c("Date","Start Time", "End Time"))
+```
+
+```{r include=FALSE}
+Rows <- planting_file %>%
+  select(c("Date", "Time","Range", "RowA","RowB","RowC","RowD")) %>% 
+  pivot_longer(cols = starts_with("Row"),
+               names_to = "Row",
+               names_prefix = "Row",
+               values_to = "Row_number",
+               values_drop_na = TRUE)
+
+Counts <- planting_file %>% 
+  select(c("Date","Time","Range","CountA","CountB","CountC","CountD")) %>% 
+   pivot_longer(cols = starts_with("Count"),
+               names_to = "Row",
+               names_prefix = "Count",
+               values_to = "Count",
+               values_drop_na = TRUE)
+
+Skips <- planting_file %>% 
+  select(c("Date","Time","Range","SkipA","SkipB","SkipC","SkipD")) %>% 
+   pivot_longer(cols = starts_with("Skip"),
+               names_to = "Row",
+               names_prefix = "Skip",
+               values_to = "Skip",
+               values_drop_na = TRUE)
+
+Doubles <- planting_file %>% 
+  select(c("Date","Time","Range","DoubleA","DoubleB","DoubleC","DoubleD")) %>% 
+   pivot_longer(cols = starts_with("Double"),
+               names_to = "Row",
+               names_prefix = "Double",
+               values_to = "Double",
+               values_drop_na = TRUE)
+```
+
+```{r include=FALSE}
+long_planting <- Rows %>% 
+  right_join(Counts)%>% 
+  right_join(Skips)%>% 
+  right_join(Doubles)
+
+long_planting <- long_planting[,c(1,2,4,3,5:8)]
+
+```
+
+### Seed Counts, Skips, and Doubles by Nursery Row
+
+```{r echo=FALSE}
+DT::datatable(long_planting, 
+              colnames = c("Row Number" = "Row_number"),
+              caption = htmltools::tags$caption(
+    style = 'caption-side: bottom; text-align: center;',
+    'Table 1: ', htmltools::em('Planter unit data by range and row')),
+    filter = 'top')
+```
+
+```{r include=FALSE}
+summary_table <- long_planting %>% 
+  group_by(Row) %>% 
+  filter(Row_number != 13 & Row_number != 25 & Row_number != 37) %>% 
+  summarise(
+    `Average Seed Count` = round(mean(Count),2),
+    `Average Skips` = round(mean(Skip),2),
+    `Average Double` = round(mean(Double),2),
+    `Total Seed Count` = sum(Count),
+    `Total Skips` = sum(Skip),
+    `Total Doubles` = sum(Double),
+    ) %>% 
+  rename(
+    `Planter Unit` = Row
+  )
+```
+
+### Performance of Planter by Planter Unit
+
+```{r echo=FALSE}
+DT::datatable(summary_table,
+              caption = htmltools::tags$caption(
+    style = 'caption-side: bottom; text-align: center;',
+    'Table 2: ', htmltools::em('Summary of planter performance by unit')))  
+```
+
+### Planting Shifts and Errors
+
+##### Fill shows seed count per plot
+
+```{r echo=FALSE}
+heat_map <- long_planting %>% 
+  select(c("Range", "Row_number","Count")) %>% 
+  arrange(Row_number, Range)
+
+heat_map <- heat_map %>% 
+  pivot_wider(names_from = Row_number, values_from = Count) %>% 
+  arrange(Range)
+
+
+heat_test <- data.matrix(heat_map)
+
+par(xpd=TRUE,mai = c(0,0,0,0))
+
+heatmap(as.matrix(heat_map[, -1]), Rowv = NA, Colv = NA,
+        xlab = "Row", ylab = "Range",
+        col= brewer.pal(11,"RdYlGn"))
+
+legend(0,0.9, legend=c("Low", "", "","", "", "Avg","", "", "","", "High"), 
+     fill=brewer.pal(11,"RdYlGn"), bty="n")
+           
+
+```
+
+## Planting 2.3
+
+```{r include=FALSE}
+planting_file <- read.csv("planting_2.3.csv")
+
+planting_file <- planting_file %>% 
+  separate(Date...Time, c("Date","Time","PM"), sep = " ")
+
+
+```
+
+```{r include=FALSE}
+
+time <- planting_file %>% 
+  group_by(Date) %>% 
+  summarise(
+    min=min(Time),
+    max=max(Time))
+  
+  
+```
+
+### Planting Start and End Times
+
+```{r echo=FALSE}
+kable(time,
+      col.names = c("Date","Start Time", "End Time"))
+```
+
+```{r include=FALSE}
+Rows <- planting_file %>%
+  select(c("Date", "Time","Range", "RowA","RowB","RowC","RowD")) %>% 
+  pivot_longer(cols = starts_with("Row"),
+               names_to = "Row",
+               names_prefix = "Row",
+               values_to = "Row_number",
+               values_drop_na = TRUE)
+
+Counts <- planting_file %>% 
+  select(c("Date","Time","Range","CountA","CountB","CountC","CountD")) %>% 
+   pivot_longer(cols = starts_with("Count"),
+               names_to = "Row",
+               names_prefix = "Count",
+               values_to = "Count",
+               values_drop_na = TRUE)
+
+Skips <- planting_file %>% 
+  select(c("Date","Time","Range","SkipA","SkipB","SkipC","SkipD")) %>% 
+   pivot_longer(cols = starts_with("Skip"),
+               names_to = "Row",
+               names_prefix = "Skip",
+               values_to = "Skip",
+               values_drop_na = TRUE)
+
+Doubles <- planting_file %>% 
+  select(c("Date","Time","Range","DoubleA","DoubleB","DoubleC","DoubleD")) %>% 
+   pivot_longer(cols = starts_with("Double"),
+               names_to = "Row",
+               names_prefix = "Double",
+               values_to = "Double",
+               values_drop_na = TRUE)
+```
+
+```{r include=FALSE}
+long_planting <- Rows %>% 
+  right_join(Counts)%>% 
+  right_join(Skips)%>% 
+  right_join(Doubles)
+
+long_planting <- long_planting[,c(1,2,4,3,5:8)]
+
+```
+
+### Seed Counts, Skips, and Doubles by Nursery Row
+
+```{r echo=FALSE}
+DT::datatable(long_planting, 
+              colnames = c("Row Number" = "Row_number"),
+              caption = htmltools::tags$caption(
+    style = 'caption-side: bottom; text-align: center;',
+    'Table 1: ', htmltools::em('Planter unit data by range and row')),
+    filter = 'top')
+```
+
+```{r include=FALSE}
+summary_table <- long_planting %>% 
+  group_by(Row) %>% 
+  summarise(
+    `Average Seed Count` = round(mean(Count),2),
+    `Average Skips` = round(mean(Skip),2),
+    `Average Double` = round(mean(Double),2),
+    `Total Seed Count` = sum(Count),
+    `Total Skips` = sum(Skip),
+    `Total Doubles` = sum(Double),
+    ) %>% 
+  rename(
+    `Planter Unit` = Row
+  )
+```
+
+### Performance of Planter by Planter Unit
+
+```{r echo=FALSE}
+DT::datatable(summary_table,
+              caption = htmltools::tags$caption(
+    style = 'caption-side: bottom; text-align: center;',
+    'Table 2: ', htmltools::em('Summary of planter performance by unit')))  
+```
+
+### Planting Shifts and Errors
+
+##### Fill shows seed count per plot
+
+```{r echo=FALSE}
+heat_map <- long_planting %>% 
+  select(c("Range", "Row_number","Count")) %>% 
+  arrange(Row_number, Range)
+
+heat_map <- heat_map %>% 
+  pivot_wider(names_from = Row_number, values_from = Count) %>% 
+  arrange(Range)
+
+
+
+heat_test <- data.matrix(heat_map)
+
+par(xpd=TRUE,mai = c(0,0,0,0))
+
+heatmap(as.matrix(heat_map[, -1]), Rowv = NA, Colv = NA,
+        xlab = "Row", ylab = "Range",
+        col= brewer.pal(11,"RdYlGn"))
+
+legend(0,0.9, legend=c("Low", "", "","", "", "Avg","", "", "","", "High"), 
+     fill=brewer.pal(11,"RdYlGn"), bty="n")
+
+```
